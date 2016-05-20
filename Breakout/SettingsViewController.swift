@@ -80,7 +80,7 @@ class SettingsViewController: UITableViewController {
         var dic = Dictionary<String, UIColor>()
         dic["Orange"] = UIColor.orangeColor()
         dic["Red"] = UIColor.redColor()
-        dic["White"] = UIColor.blackColor()
+        dic["White"] = UIColor.whiteColor()
         dic["Blue"] = UIColor.blueColor()
         dic["Green"] = UIColor.greenColor()
         return dic
@@ -103,6 +103,8 @@ class SettingsViewController: UITableViewController {
     
     override func viewDidLoad() {
         pushStrength = defaults.doubleForKey(SettingsKeys.tapStrengthKey)
+        pushStrengthSlider.minimumValue = 0
+        pushStrengthSlider.maximumValue = 1
         
         colsStepper.minimumValue = 1
         colsStepper.maximumValue = 20

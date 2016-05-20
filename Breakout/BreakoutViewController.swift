@@ -24,7 +24,7 @@ class BreakoutViewController: UIViewController, UICollisionBehaviorDelegate {
     
     var rowDensity = 6
     
-    var percentBricks: CGFloat = 0.4
+    var percentBricks: CGFloat = 0.34
     
     var bricks = Dictionary<String, UIView>()
     
@@ -33,6 +33,8 @@ class BreakoutViewController: UIViewController, UICollisionBehaviorDelegate {
     var beginnerMode = false
     
     var brickColor = UIColor.orangeColor()
+    
+    var ballAccelScale: CGFloat = 0.5
     
     var brickSize: CGSize {
         get {
@@ -135,7 +137,6 @@ class BreakoutViewController: UIViewController, UICollisionBehaviorDelegate {
     }
     
     func collisionBehavior(behavior: UICollisionBehavior, beganContactForItem item: UIDynamicItem, withBoundaryIdentifier identifier: NSCopying?, atPoint p: CGPoint) {
-//        print("\(p)")
         
         if let id = identifier as? String {
             let regex = try! NSRegularExpression(pattern: "^[0-9]+ [0-9]+$", options: [])
@@ -151,11 +152,13 @@ class BreakoutViewController: UIViewController, UICollisionBehaviorDelegate {
                 removeBrick(row, col: col, id: id)
             }
             
-        } else if p.y >= gameView.bounds.height-4 {
+        } else if p.y >= gameView.bounds.height-10 {
             if !gameOver && !beginnerMode {
-                let attachmentBehavior = UIAttachmentBehavior(item: ball, attachedToAnchor: p)
+                let attachmentBehavior = UIAttachmentBehavior(item: ball, attachedToAnchor: CGPoint(x: p.x - ball.frame.size.width/2.0, y: p.y - ball.frame.size.height/2.0))
                 attachmentBehavior.length = 0
                 animator.addBehavior(attachmentBehavior)
+                breakoutBehavior.removeItem(ball)
+                ballBehavior.removeItem(ball)
                 endGame(false)
             }
         }
@@ -279,6 +282,7 @@ class BreakoutViewController: UIViewController, UICollisionBehaviorDelegate {
     func resetGame() {
         animator = UIDynamicAnimator(referenceView: gameView)
         pushOnTapBehavior.removeItem(ball)
+        pushOnTapBehavior.magnitude = ballAccelScale * ballSize.height * ballSize.height / 750.0
         breakoutBehavior = BreakoutBehavior()
         ballBehavior = BreakoutViewController.createBallBehavior()
         gameView.removeAllSubviews()
@@ -288,7 +292,7 @@ class BreakoutViewController: UIViewController, UICollisionBehaviorDelegate {
     func updateSettings() {
         numRows = defaults.integerForKey(SettingsKeys.numRowsKey)
         rowDensity = defaults.integerForKey(SettingsKeys.numColsKey)
-        pushOnTapBehavior.magnitude = CGFloat(defaults.doubleForKey(SettingsKeys.tapStrengthKey))
+        ballAccelScale = CGFloat(defaults.doubleForKey(SettingsKeys.tapStrengthKey))
         
         if let newColor = defaults.colorForKey(SettingsKeys.brickColorKey){
             brickColor = newColor
@@ -335,7 +339,7 @@ class BreakoutViewController: UIViewController, UICollisionBehaviorDelegate {
             dic[SettingsKeys.beginnerModeKey] = beginnerMode
             dic[SettingsKeys.numColsKey] = rowDensity
             dic[SettingsKeys.numRowsKey] = numRows
-            dic[SettingsKeys.tapStrengthKey] = Double(pushOnTapBehavior.magnitude)
+            dic[SettingsKeys.tapStrengthKey] = ballAccelScale
             
             let colorData = NSKeyedArchiver.archivedDataWithRootObject(brickColor)
             dic[SettingsKeys.brickColorKey] = colorData
@@ -356,6 +360,10 @@ class BreakoutViewController: UIViewController, UICollisionBehaviorDelegate {
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
+    }
+    
+    override func viewWillDisappear(animated: Bool) {
+        resetGame()
     }
 
 
